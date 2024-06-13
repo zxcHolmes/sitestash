@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((request) => {
 
 chrome.contextMenus.create({
   id: "showPageTitle",
-  title: "显示网页标题",
+  title: "SiteStash",
   contexts: ["all"]
 });
 
