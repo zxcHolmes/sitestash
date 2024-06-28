@@ -5,13 +5,15 @@ import {ref, onMounted} from 'vue'
 import {ElMessageBox} from 'element-plus'
 import {MdEditor} from 'md-editor-v3';
 import 'md-editor-v3/lib/style.css';
+import {ElNotification} from 'element-plus'
 
 const dialogVisible = ref(false)
 const isSelecting = ref(false)
-
+const title = ref("")
 const article = ref("hello world")
 onMounted(() => {
   let hoveredElement = null;
+  title.value = document.title
 
   document.addEventListener('mousemove', (e) => {
     if (!isSelecting.value) {
@@ -43,7 +45,15 @@ onMounted(() => {
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'q') {
       e.preventDefault();
+      if (dialogVisible.value) {
+        return
+      }
       isSelecting.value = true;
+      ElNotification({
+        title: 'Success',
+        message: 'Move your mouse to select text area',
+        type: 'success',
+      })
     }
     if (e.key === 'Escape' && isSelecting.value) {
       isSelecting.value = false;
@@ -56,6 +66,11 @@ onMounted(() => {
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.action === "getPageTitle") {
       isSelecting.value = true;
+      ElNotification({
+        title: 'Success',
+        message: 'Move your mouse to select text area',
+        type: 'success',
+      })
     }
   });
 })
@@ -64,11 +79,11 @@ onMounted(() => {
 <template>
   <el-dialog
       v-model="dialogVisible"
-      title="Tips"
-      width="960"
+      :title="title"
+      :fullscreen="true"
       destroy-on-close
   >
-    <el-scrollbar height="400px">
+    <el-scrollbar>
       <MdEditor v-model="article"/>
     </el-scrollbar>
 
