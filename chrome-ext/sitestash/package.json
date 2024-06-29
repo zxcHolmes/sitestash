@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.5.0",
+    "@toast-ui/editor": "^3.2.2",
     "element-plus": "^2.7.5",
     "md-editor-v3": "^4.17.0",
     "turndown": "^7.2.0",
