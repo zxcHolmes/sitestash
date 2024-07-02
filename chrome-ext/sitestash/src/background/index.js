@@ -70,6 +70,11 @@ chrome.contextMenus.create({
 
 chrome.contextMenus.onClicked.addListener(function (info, tab) {
   if (info.menuItemId === "SiteStash") {
-    chrome.tabs.sendMessage(tab.id, {action: "SiteStash"});
+    if (info.selectionText){
+      chrome.tabs.sendMessage(tab.id, {action: "SelectText", "text": info.selectionText});
+    }else {
+      chrome.tabs.sendMessage(tab.id, {action: "SiteStash"});
+    }
+
   }
 });

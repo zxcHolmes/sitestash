@@ -1,6 +1,6 @@
 <script setup lang="js">
 import TurndownService from "turndown"
-import {ref, onMounted, reactive, nextTick, watch, watchEffect} from 'vue'
+import {ref, onMounted, reactive, nextTick, watch, watchEffect, onBeforeUnmount} from 'vue'
 import Editor from '@toast-ui/editor';
 import * as storage from "../storage.js"
 import '@toast-ui/editor/dist/toastui-editor.css';
@@ -16,8 +16,6 @@ const prompts = ref([])
 let editor
 watchEffect(() => {
   if (toastuiEditor.value) {
-    console.log(toastuiEditor.value)
-    console.log(article.value)
     editor = new Editor({
       el: toastuiEditor.value,
       previewStyle: 'vertical',
@@ -26,7 +24,14 @@ watchEffect(() => {
     })
   }
 })
+const handleVisibilityChange = async () => {
+  if (document.hidden) {
+  } else {
+    prompts.value = await storage.readTemplate()
+  }
+};
 onMounted(async () => {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   prompts.value = await storage.readTemplate()
   let hoveredElement = null;
   title.value = document.title
@@ -49,10 +54,8 @@ onMounted(async () => {
     e.preventDefault();
     e.stopPropagation();
     let documentClone = hoveredElement.cloneNode(true);
-    //let parsedArticle = new Readability(documentClone).parse();
     let turndownService = new TurndownService()
     let markdown = turndownService.turndown(documentClone)
-    console.log(markdown)
     article.value = markdown;
     dialogVisible.value = true
     isSelecting.value = false;
@@ -88,6 +91,10 @@ onMounted(async () => {
         type: 'success',
       })
     }
+    if(request.action === "SelectText"){
+      article.value = request.text;
+      dialogVisible.value = true
+    }
     if (request.action === "message") {
       ElNotification({
         title: "error message",
@@ -105,7 +112,6 @@ onMounted(async () => {
   });
 })
 const generateContent = () => {
-  console.log("promptId:", forms.prompt)
   if (forms.prompt === "") {
     ElNotification({
       title: "error message",
@@ -118,7 +124,6 @@ const generateContent = () => {
 }
 
 const settings = () => {
-  console.log("settings")
   chrome.runtime.sendMessage({action: "openOptionsPage"});
 }
 
@@ -150,6 +155,11 @@ watch(article, (newValue, oldValue) => {
   if (editor) {
     editor.setMarkdown(newValue)
   }
+});
+
+
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
 
