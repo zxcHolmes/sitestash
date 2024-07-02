@@ -2,8 +2,8 @@
 import TurndownService from "turndown"
 import {ref, onMounted, reactive, nextTick, watch, watchEffect} from 'vue'
 import Editor from '@toast-ui/editor';
+import * as storage from "../storage.js"
 import '@toast-ui/editor/dist/toastui-editor.css';
-import html2canvas from 'html2canvas';
 import {ElNotification} from 'element-plus'
 const dialogVisible = ref(false)
 const isSelecting = ref(false)
@@ -11,6 +11,7 @@ const title = ref("")
 const article = ref("hello world")
 const toastuiEditor = ref(null)
 const canvasDiv = ref(null)
+const prompts = ref([])
 let editor
 watchEffect(() => {
   if (toastuiEditor.value) {
@@ -24,8 +25,8 @@ watchEffect(() => {
     })
   }
 })
-onMounted(() => {
-
+onMounted(async() => {
+  prompts.value = await storage.readTemplate()
   let hoveredElement = null;
   title.value = document.title
 
@@ -55,11 +56,6 @@ onMounted(() => {
     dialogVisible.value = true
     isSelecting.value = false;
     hoveredElement.style.outline = '';
-    html2canvas(hoveredElement).then(function(canvas) {
-      console.log(canvasDiv.value)
-      canvasDiv.value.innerHTML = '';
-      canvasDiv.value.appendChild(canvas);
-    });
   });
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'q') {
@@ -150,8 +146,12 @@ watch(article, (newValue, oldValue) => {
               placeholder="Prompt Select"
               clearable
           >
-            <el-option label="Zone one" value="shanghai"/>
-            <el-option label="Zone two" value="beijing"/>
+            <el-option
+                v-for="item in prompts"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -189,9 +189,6 @@ watch(article, (newValue, oldValue) => {
         </el-tab-pane>
         <el-tab-pane label="Origin Content">
           <div ref="toastuiEditor"></div>
-        </el-tab-pane>
-        <el-tab-pane label="Screen Shot">
-          <div ref="canvasDiv"></div>
         </el-tab-pane>
       </el-tabs>
     </div>

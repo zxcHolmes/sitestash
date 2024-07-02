@@ -4,9 +4,18 @@ import "../style.css"
 import * as storage from "../storage.js"
 
 const promptTemplates = ref([])
+const gptSettingModel = reactive({
+  "ollamaApi": "http://localhost:11434/api/generate",
+  "ollamaModelName": "",
+  "numCtx": 2048
+})
 
 onMounted(async () => {
   promptTemplates.value = await storage.readTemplate()
+  let gptSettings = await  storage.readGPTSetting()
+  if (Object.keys(gptSettings).length !== 0){
+    Object.assign(gptSettingModel, gptSettings)
+  }
 })
 const dialogVisible = ref(false)
 const addPrompts = () => {
@@ -63,10 +72,7 @@ const saveTemplate = async () => {
 
 const deleteTemplate = async (index) => {
   let templates = await storage.readTemplate()
-  const indexToRemove = templates.findIndex(item => item.id === promptModel.id);
-  if (indexToRemove !== -1) {
-    templates.splice(indexToRemove, 1);
-  }
+  templates.splice(index, 1);
   storage.saveTemplate(templates)
   promptTemplates.value = templates
 }
@@ -78,6 +84,10 @@ const editTemplate = (index) => {
   promptModel.content = template.content
   promptModel.defaultTemplate = template.defaultTemplate
   dialogVisible.value = true
+}
+
+const saveGPTSetting = () => {
+  storage.saveGPTSetting(gptSettingModel)
 }
 </script>
 
@@ -94,7 +104,7 @@ const editTemplate = (index) => {
               <p class="mt-1 text-sm text-gray-500 whitespace-pre-wrap">{{ item.content }}</p>
               <span v-if="item.defaultTemplate"
                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          默认模板
+          Default Prompt
         </span>
             </div>
             <div class="ml-4 flex-shrink-0">
@@ -109,7 +119,23 @@ const editTemplate = (index) => {
           </li>
         </ul>
       </el-tab-pane>
-      <el-tab-pane label="GPT Settings">Config</el-tab-pane>
+      <el-tab-pane label="GPT Settings">
+        <el-form :model="gptSettingModel" label-width="auto" style="max-width: 600px">
+          <el-form-item label="Ollama Api Address">
+            <el-input v-model="gptSettingModel.ollamaApi" type="text" autocomplete="off"/>
+          </el-form-item>
+          <el-form-item label="Ollama Model Name">
+            <el-input v-model="gptSettingModel.ollamaModelName" type="text" autocomplete="off"/>
+          </el-form-item>
+          <el-form-item label="Context length" >
+            <el-input v-model="gptSettingModel.numCtx" type="number" autocomplete="off"/>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="saveGPTSetting">Save</el-button>
+          </el-form-item>
+        </el-form>
+
+      </el-tab-pane>
       <el-tab-pane label="Other Settings">
       </el-tab-pane>
     </el-tabs>
