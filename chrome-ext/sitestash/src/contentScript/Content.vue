@@ -3,12 +3,14 @@ import TurndownService from "turndown"
 import {ref, onMounted, reactive, nextTick, watch, watchEffect} from 'vue'
 import Editor from '@toast-ui/editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
+import html2canvas from 'html2canvas';
 import {ElNotification} from 'element-plus'
 const dialogVisible = ref(false)
 const isSelecting = ref(false)
 const title = ref("")
 const article = ref("hello world")
 const toastuiEditor = ref(null)
+const canvasDiv = ref(null)
 let editor
 watchEffect(() => {
   if (toastuiEditor.value) {
@@ -53,6 +55,11 @@ onMounted(() => {
     dialogVisible.value = true
     isSelecting.value = false;
     hoveredElement.style.outline = '';
+    html2canvas(hoveredElement).then(function(canvas) {
+      console.log(canvasDiv.value)
+      canvasDiv.value.innerHTML = '';
+      canvasDiv.value.appendChild(canvas);
+    });
   });
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'q') {
@@ -91,7 +98,8 @@ const generateContent = () => {
 }
 
 const settings = () => {
-
+  console.log("settings")
+  chrome.runtime.sendMessage({action: "openOptionsPage"});
 }
 
 const forms = reactive({
@@ -181,6 +189,9 @@ watch(article, (newValue, oldValue) => {
         </el-tab-pane>
         <el-tab-pane label="Origin Content">
           <div ref="toastuiEditor"></div>
+        </el-tab-pane>
+        <el-tab-pane label="Screen Shot">
+          <div ref="canvasDiv"></div>
         </el-tab-pane>
       </el-tabs>
     </div>

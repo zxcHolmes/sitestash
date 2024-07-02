@@ -6,6 +6,12 @@ chrome.runtime.onMessage.addListener((request) => {
   }
 })
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "openOptionsPage") {
+    chrome.runtime.openOptionsPage();
+  }
+});
+
 chrome.contextMenus.create({
   id: "showPageTitle",
   title: "SiteStash",
