@@ -160,7 +160,7 @@ watch(article, (newValue, oldValue) => {
       :fullscreen="true"
       destroy-on-close
   >
-    <div style="height: 85vh;">
+    <el-scrollbar style="height: 85vh;">
 
 
       <el-form :inline="true" :model="forms">
@@ -215,7 +215,7 @@ watch(article, (newValue, oldValue) => {
           <div ref="toastuiEditor"></div>
         </el-tab-pane>
       </el-tabs>
-    </div>
+    </el-scrollbar>
 
 
     <template #footer>
