@@ -43,4 +43,8 @@ export default defineManifest({
   chrome_url_overrides: {
     newtab: 'newtab.html',
   },
+  host_permissions: [
+      "https://*/",
+      "http://*/"
+  ],
 })

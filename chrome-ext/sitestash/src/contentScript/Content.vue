@@ -5,12 +5,13 @@ import Editor from '@toast-ui/editor';
 import * as storage from "../storage.js"
 import '@toast-ui/editor/dist/toastui-editor.css';
 import {ElNotification} from 'element-plus'
+
 const dialogVisible = ref(false)
 const isSelecting = ref(false)
 const title = ref("")
 const article = ref("hello world")
+const gptOutput = ref("")
 const toastuiEditor = ref(null)
-const canvasDiv = ref(null)
 const prompts = ref([])
 let editor
 watchEffect(() => {
@@ -25,7 +26,7 @@ watchEffect(() => {
     })
   }
 })
-onMounted(async() => {
+onMounted(async () => {
   prompts.value = await storage.readTemplate()
   let hoveredElement = null;
   title.value = document.title
@@ -79,7 +80,7 @@ onMounted(async() => {
   });
 
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.action === "getPageTitle") {
+    if (request.action === "SiteStash") {
       isSelecting.value = true;
       ElNotification({
         title: 'Site Stash',
@@ -87,10 +88,33 @@ onMounted(async() => {
         type: 'success',
       })
     }
+    if (request.action === "message") {
+      ElNotification({
+        title: "error message",
+        message: request.message,
+        type: 'error',
+      })
+    }
+    if (request.action === "gptOutputStart") {
+      gptOutput.value = ""
+    }
+    if (request.action === "gptOutput") {
+      gptOutput.value = gptOutput.value + request.message
+    }
+
   });
 })
 const generateContent = () => {
-
+  console.log("promptId:", forms.prompt)
+  if (forms.prompt === "") {
+    ElNotification({
+      title: "error message",
+      message: "please specify prompt template before generate Content",
+      type: 'error',
+    })
+    return
+  }
+  chrome.runtime.sendMessage({action: 'generateContent', promptId: forms.prompt, article: article.value})
 }
 
 const settings = () => {
@@ -185,7 +209,7 @@ watch(article, (newValue, oldValue) => {
       </div>
       <el-tabs type="border-card" style="margin-top: 20px">
         <el-tab-pane label="GPT Output">
-          GPT Output
+          <pre>{{ gptOutput }}</pre>
         </el-tab-pane>
         <el-tab-pane label="Origin Content">
           <div ref="toastuiEditor"></div>

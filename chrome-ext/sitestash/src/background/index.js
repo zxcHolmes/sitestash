@@ -1,25 +1,75 @@
+import * as storage from "../storage.js"
+import {Ollama} from 'ollama'
+
 console.log('background is running')
 
-chrome.runtime.onMessage.addListener((request) => {
-  if (request.type === 'COUNT') {
-    console.log('background has received a message from popup, and count is ', request?.count)
-  }
-})
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "openOptionsPage") {
     chrome.runtime.openOptionsPage();
+  } else if (request.action === "generateContent") {
+    let promptId = request.promptId
+    let article = request.article
+    let gptSettings = await storage.readGPTSetting()
+    let promptTemplates = await storage.readTemplate()
+    const index = promptTemplates.findIndex(item => item.id === promptId);
+    if (!gptSettings.ollamaApi) {
+      chrome.tabs.sendMessage(sender.tab.id, {
+        action: "message",
+        message: "Please configure the ollama api address"
+      });
+      return
+    }
+    if (!gptSettings.ollamaModelName) {
+      chrome.tabs.sendMessage(sender.tab.id, {
+        action: "message",
+        message: "Please configure the ollama model Name"
+      });
+      return
+    }
+    if (!gptSettings.numCtx) {
+      gptSettings.numCtx = 4096
+    }
+    if (index !== -1) {
+      let promptTemplate = promptTemplates[index]
+      let promptContent = promptTemplate.content
+      const ollama = new Ollama({host: gptSettings.ollamaApi})
+      const response = await ollama.generate({
+        model: gptSettings.ollamaModelName,
+        prompt: promptContent.replace("{article}", article),
+        stream: true,
+        options: {
+          num_ctx: parseInt(gptSettings.numCtx)
+        }
+      })
+      chrome.tabs.sendMessage(sender.tab.id, {
+        action: "gptOutputStart",
+        message: ""
+      });
+      for await (const part of response) {
+        console.log(part.response)
+        chrome.tabs.sendMessage(sender.tab.id, {
+          action: "gptOutput",
+          message: part.response
+        });
+      }
+    } else {
+      chrome.tabs.sendMessage(sender.tab.id, {
+        action: "message",
+        message: "Cannot find the prompt " + promptId
+      });
+    }
+
   }
 });
 
 chrome.contextMenus.create({
-  id: "showPageTitle",
+  id: "SiteStash",
   title: "SiteStash",
   contexts: ["all"]
 });
 
-chrome.contextMenus.onClicked.addListener(function(info, tab) {
-  if (info.menuItemId === "showPageTitle") {
-    chrome.tabs.sendMessage(tab.id, { action: "getPageTitle" });
+chrome.contextMenus.onClicked.addListener(function (info, tab) {
+  if (info.menuItemId === "SiteStash") {
+    chrome.tabs.sendMessage(tab.id, {action: "SiteStash"});
   }
 });

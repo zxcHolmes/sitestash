@@ -28,6 +28,7 @@
     "element-plus": "^2.7.5",
     "html2canvas": "^1.4.1",
     "md-editor-v3": "^4.17.0",
+    "ollama": "^0.5.2",
     "turndown": "^7.2.0",
     "vue": "^3.2.37"
   },
