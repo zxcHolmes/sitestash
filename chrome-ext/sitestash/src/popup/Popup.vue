@@ -1,6 +1,5 @@
 <script setup lang="js">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
-
 const count = ref(0)
 const link = ref('https://github.com/guocaoyi/create-chrome-ext')
 

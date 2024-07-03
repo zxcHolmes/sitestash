@@ -4,8 +4,9 @@ import {ref, onMounted, reactive, nextTick, watch, watchEffect, onBeforeUnmount}
 import Editor from '@toast-ui/editor';
 import * as storage from "../storage.js"
 import '@toast-ui/editor/dist/toastui-editor.css';
-import {ElNotification} from 'element-plus'
-
+import {ElMessage} from 'element-plus'
+import "element-plus/theme-chalk/el-message.css"
+const dialogRef = ref(null)
 const dialogVisible = ref(false)
 const isSelecting = ref(false)
 const title = ref("")
@@ -24,15 +25,28 @@ watchEffect(() => {
     })
   }
 })
-const handleVisibilityChange = async () => {
+const reloadTemplate = async () => {
   if (document.hidden) {
   } else {
     prompts.value = await storage.readTemplate()
+    const getDefaultPrompt = () => prompts.value.find(item => item.defaultTemplate);
+
+    if (forms.promptId === '') {
+      // 当 forms.promptId 为空字符串时，读取默认模板
+      forms.promptId = getDefaultPrompt()?.id ?? '';
+    } else {
+      // 当 forms.promptId 不为空，检查是否存在于 prompts.value 中
+      const promptExists = prompts.value.some(item => item.id === forms.promptId);
+      if (!promptExists) {
+        // 如果在 prompts.value 中找不到这个 id，置为默认模板
+        forms.promptId = getDefaultPrompt()?.id ?? '';
+      }
+    }
   }
 };
 onMounted(async () => {
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  prompts.value = await storage.readTemplate()
+  document.addEventListener('visibilitychange', reloadTemplate);
+  await reloadTemplate()
   let hoveredElement = null;
   title.value = document.title
 
@@ -68,10 +82,10 @@ onMounted(async () => {
         return
       }
       isSelecting.value = true;
-      ElNotification({
-        title: 'Site Stash',
+      ElMessage({
+        showClose: true,
         message: 'Move your mouse to select text area',
-        type: 'success',
+        type: 'success'
       })
     }
     if (e.key === 'Escape' && isSelecting.value) {
@@ -85,21 +99,21 @@ onMounted(async () => {
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.action === "SiteStash") {
       isSelecting.value = true;
-      ElNotification({
-        title: 'Site Stash',
+      ElMessage({
+        showClose: true,
         message: 'Move your mouse to select text area',
-        type: 'success',
+        type: 'error'
       })
     }
-    if(request.action === "SelectText"){
+    if (request.action === "SelectText") {
       article.value = request.text;
       dialogVisible.value = true
     }
     if (request.action === "message") {
-      ElNotification({
-        title: "error message",
+      ElMessage({
+        showClose: true,
         message: request.message,
-        type: 'error',
+        type: 'error'
       })
     }
     if (request.action === "gptOutputStart") {
@@ -112,15 +126,15 @@ onMounted(async () => {
   });
 })
 const generateContent = () => {
-  if (forms.prompt === "") {
-    ElNotification({
-      title: "error message",
-      message: "please specify prompt template before generate Content",
-      type: 'error',
+  if (forms.promptId === "") {
+    ElMessage({
+      showClose: true,
+      message: 'Please specify prompt template before generate Content',
+      type: 'error'
     })
     return
   }
-  chrome.runtime.sendMessage({action: 'generateContent', promptId: forms.prompt, article: article.value})
+  chrome.runtime.sendMessage({action: 'generateContent', promptId: forms.promptId, article: article.value})
 }
 
 const settings = () => {
@@ -128,7 +142,7 @@ const settings = () => {
 }
 
 const forms = reactive({
-  prompt: ""
+  promptId: ""
 })
 const dynamicTags = ref(['Tag 1', 'Tag 2', 'Tag 3'])
 const handleClose = (tag) => {
@@ -151,15 +165,13 @@ const handleInputConfirm = () => {
   inputValue.value = ''
 }
 watch(article, (newValue, oldValue) => {
-  console.log(`watch: count changed from ${oldValue} to ${newValue}`);
   if (editor) {
     editor.setMarkdown(newValue)
   }
 });
 
-
 onBeforeUnmount(() => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  document.removeEventListener('visibilitychange', reloadTemplate);
 });
 </script>
 
@@ -170,13 +182,14 @@ onBeforeUnmount(() => {
       :fullscreen="true"
       destroy-on-close
   >
+    <div ref="dialogRef"></div>
     <el-scrollbar style="height: 85vh;">
 
 
       <el-form :inline="true" :model="forms">
         <el-form-item label="Prompt Select">
           <el-select
-              v-model="forms.prompt"
+              v-model="forms.promptId"
               placeholder="Prompt Select"
               clearable
           >

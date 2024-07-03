@@ -1,5 +1,5 @@
 import * as storage from "../storage.js"
-import {Ollama} from 'ollama'
+import {Ollama} from 'ollama/browser'
 
 console.log('background is running')
 
