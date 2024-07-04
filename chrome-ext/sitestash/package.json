@@ -1,9 +1,9 @@
 {
   "name": "sitestash",
-  "displayName": "sitestash",
-  "version": "0.0.0",
+  "displayName": "SiteStash",
+  "version": "1.0",
   "author": "zxc",
-  "description": "",
+  "description": "SiteStash is a web page bookmarking and knowledge management system. It consists of a Chrome extension for easily saving websites with auto-generated summaries and tags, and a backend for storing, organizing and searching through your bookmarked content.",
   "type": "module",
   "license": "MIT",
   "keywords": [
