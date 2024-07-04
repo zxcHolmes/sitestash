@@ -109,10 +109,44 @@ const generateTags = async (request, sender) => {
     });
     return
   }
-  chrome.tabs.sendMessage(sender.tab.id,{
+  chrome.tabs.sendMessage(sender.tab.id, {
     action: "generateTagsResponse",
     message: response.response
   })
+}
+
+const saveGptOutput = async (request, sender) => {
+  const otherSettings = await storage.readOtherSettings()
+  const url = otherSettings.receiveApi
+  const data = {
+    url: request.url,
+    gpt_output: request.gpt_output,
+    tags: request.tags,
+    title: request.title
+  }
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    chrome.tabs.sendMessage(sender.tab.id, {
+      action: "message",
+      message: "Successfully send data to url " + url,
+      type: "success"
+    });
+  })
+  .catch(error => {
+    console.error(error)
+    chrome.tabs.sendMessage(sender.tab.id, {
+      action: "message",
+      message: "Got an error when send data to url " + url + error.message
+    });
+  });
 }
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
@@ -122,6 +156,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     await generateContent(request, sender)
   } else if (request.action === "generateTags") {
     await generateTags(request, sender)
+  } else if (request.action === "saveGptOutput") {
+    await saveGptOutput(request, sender)
   }
 });
 

@@ -10,12 +10,21 @@ const gptSettingModel = reactive({
   "numCtx": 2048
 })
 
+const otherSettingsModel = reactive({
+  "receiveApi": "https://hostname/api"
+})
+
 onMounted(async () => {
   promptTemplates.value = await storage.readTemplate()
-  let gptSettings = await  storage.readGPTSetting()
-  if (Object.keys(gptSettings).length !== 0){
+  let gptSettings = await storage.readGPTSetting()
+  let otherSettings = await storage.readOtherSettings()
+  if (Object.keys(gptSettings).length !== 0) {
     Object.assign(gptSettingModel, gptSettings)
   }
+  if (Object.keys(otherSettings).length !== 0) {
+    Object.assign(otherSettingsModel, otherSettings)
+  }
+
 })
 const dialogVisible = ref(false)
 const addPrompts = () => {
@@ -89,6 +98,10 @@ const editTemplate = (index) => {
 const saveGPTSetting = () => {
   storage.saveGPTSetting(gptSettingModel)
 }
+
+const saveOtherSettings = () => {
+  storage.saveOtherSettings(otherSettingsModel)
+}
 </script>
 
 <template>
@@ -98,7 +111,8 @@ const saveGPTSetting = () => {
         <el-button @click="addPrompts" type="primary" class="float-left">Add Prompts</el-button>
 
         <ul class="divide-y divide-gray-200 clear-both">
-          <li v-for="(item, index) in promptTemplates" :key="index" class="py-4 flex items-center justify-between">
+          <li v-for="(item, index) in promptTemplates" :key="index"
+              class="py-4 flex items-center justify-between">
             <div class="flex-1 min-w-0">
               <h3 class="text-lg font-medium text-gray-900">{{ item.name }}</h3>
               <p class="mt-1 text-sm text-gray-500 whitespace-pre-wrap">{{ item.content }}</p>
@@ -112,7 +126,8 @@ const saveGPTSetting = () => {
                       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
                 Edit
               </button>
-              <button @click="deleteTemplate(index)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+              <button @click="deleteTemplate(index)"
+                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                 Delete
               </button>
             </div>
@@ -127,7 +142,7 @@ const saveGPTSetting = () => {
           <el-form-item label="Ollama Model Name">
             <el-input v-model="gptSettingModel.ollamaModelName" type="text" autocomplete="off"/>
           </el-form-item>
-          <el-form-item label="Context length" >
+          <el-form-item label="Context length">
             <el-input v-model="gptSettingModel.numCtx" type="number" autocomplete="off"/>
           </el-form-item>
           <el-form-item>
@@ -137,6 +152,23 @@ const saveGPTSetting = () => {
 
       </el-tab-pane>
       <el-tab-pane label="Other Settings">
+        <el-form :model="otherSettingsModel" label-width="auto" style="max-width: 600px">
+          <el-space fill>
+            <el-alert type="info" show-icon :closable="false">
+              <p>Please provide an API endpoint address to receive the content output from GPT.
+                Request sending instructions: SiteStash will send a POST form request to the API
+                address provided by the user.
+                The request will contain url, gpt_output, tags, and title.
+                Users need to handle this request on their API server side.</p>
+            </el-alert>
+            <el-form-item label="Receive api address">
+              <el-input v-model="otherSettingsModel.receiveApi"/>
+            </el-form-item>
+          </el-space>
+          <el-form-item>
+            <el-button type="primary" @click="saveOtherSettings">Save</el-button>
+          </el-form-item>
+        </el-form>
       </el-tab-pane>
     </el-tabs>
     <el-dialog

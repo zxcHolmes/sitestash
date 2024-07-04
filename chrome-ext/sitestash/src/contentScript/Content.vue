@@ -6,6 +6,7 @@ import * as storage from "../storage.js"
 import '@toast-ui/editor/dist/toastui-editor.css';
 import {ElMessage} from 'element-plus'
 import "element-plus/theme-chalk/el-message.css"
+
 const dialogRef = ref(null)
 const dialogVisible = ref(false)
 const isSelecting = ref(false)
@@ -113,7 +114,7 @@ onMounted(async () => {
       ElMessage({
         showClose: true,
         message: request.message,
-        type: 'error'
+        type: request.type ?? "error"
       })
     }
     if (request.action === "gptOutputStart") {
@@ -122,7 +123,7 @@ onMounted(async () => {
     if (request.action === "gptOutput") {
       gptOutput.value = gptOutput.value + request.message
     }
-    if(request.action === "generateTagsResponse"){
+    if (request.action === "generateTagsResponse") {
       dynamicTags.value = request.message.split(",")
     }
 
@@ -137,10 +138,11 @@ const generateContent = () => {
     })
     return
   }
-  chrome.runtime.sendMessage({action: 'generateContent', promptId: forms.promptId, article: article.value})
+  chrome.runtime.sendMessage(
+      {action: 'generateContent', promptId: forms.promptId, article: article.value})
 }
 
-const generateTags = ()=>{
+const generateTags = () => {
   chrome.runtime.sendMessage({action: 'generateTags', article: article.value})
 }
 
@@ -181,6 +183,25 @@ watch(article, (newValue, oldValue) => {
 onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', reloadTemplate);
 });
+
+const saveGptOutput = async () => {
+  let otherSettings = await storage.readOtherSettings()
+  if (otherSettings.receiveApi) {
+    chrome.runtime.sendMessage({
+      action: 'saveGptOutput',
+      url: document.URL,
+      gpt_output: gptOutput.value,
+      tags: dynamicTags.value,
+      title: document.title
+    })
+  } else {
+    ElMessage({
+      showClose: true,
+      message: 'Please configure the save api endpoint in settings page.',
+      type: 'error'
+    })
+  }
+}
 </script>
 
 <template>
@@ -253,8 +274,8 @@ onBeforeUnmount(() => {
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="dialogVisible = false">
-          Confirm
+        <el-button type="primary" @click="saveGptOutput">
+          Save
         </el-button>
       </div>
     </template>
