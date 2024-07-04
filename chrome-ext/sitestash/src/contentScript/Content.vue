@@ -122,6 +122,9 @@ onMounted(async () => {
     if (request.action === "gptOutput") {
       gptOutput.value = gptOutput.value + request.message
     }
+    if(request.action === "generateTagsResponse"){
+      dynamicTags.value = request.message.split(",")
+    }
 
   });
 })
@@ -137,6 +140,10 @@ const generateContent = () => {
   chrome.runtime.sendMessage({action: 'generateContent', promptId: forms.promptId, article: article.value})
 }
 
+const generateTags = ()=>{
+  chrome.runtime.sendMessage({action: 'generateTags', article: article.value})
+}
+
 const settings = () => {
   chrome.runtime.sendMessage({action: "openOptionsPage"});
 }
@@ -144,7 +151,7 @@ const settings = () => {
 const forms = reactive({
   promptId: ""
 })
-const dynamicTags = ref(['Tag 1', 'Tag 2', 'Tag 3'])
+const dynamicTags = ref([])
 const handleClose = (tag) => {
   dynamicTags.value.splice(dynamicTags.value.indexOf(tag), 1)
 }
@@ -168,6 +175,7 @@ watch(article, (newValue, oldValue) => {
   if (editor) {
     editor.setMarkdown(newValue)
   }
+  //generateTags()
 });
 
 onBeforeUnmount(() => {
@@ -229,6 +237,7 @@ onBeforeUnmount(() => {
         <el-button v-else class="button-new-tag" size="small" @click="showInput">
           + New Tag
         </el-button>
+        <el-button type="primary" @click="generateTags">Generate Tags</el-button>
       </div>
       <el-tabs type="border-card" style="margin-top: 20px">
         <el-tab-pane label="GPT Output">
