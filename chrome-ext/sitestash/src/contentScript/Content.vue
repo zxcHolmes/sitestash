@@ -13,18 +13,19 @@ const isSelecting = ref(false)
 const title = ref("")
 const article = ref("hello world")
 const gptOutput = ref("")
-const toastuiEditor = ref(null)
+const gptTitle = ref("")
+//const toastuiEditor = ref(null)
 const prompts = ref([])
 let editor
 watchEffect(() => {
-  if (toastuiEditor.value) {
-    editor = new Editor({
-      el: toastuiEditor.value,
-      previewStyle: 'vertical',
-      height: '500px',
-      initialValue: article.value
-    })
-  }
+  // if (toastuiEditor.value) {
+  //   editor = new Editor({
+  //     el: toastuiEditor.value,
+  //     previewStyle: 'vertical',
+  //     height: '500px',
+  //     initialValue: article.value
+  //   })
+  // }
 })
 const reloadTemplate = async () => {
   if (document.hidden) {
@@ -126,6 +127,9 @@ onMounted(async () => {
     if (request.action === "generateTagsResponse") {
       dynamicTags.value = request.message.split(",")
     }
+    if (request.action === "generateTitleResponse") {
+      gptTitle.value = request.message
+    }
 
   });
 })
@@ -144,6 +148,19 @@ const generateContent = () => {
 
 const generateTags = () => {
   chrome.runtime.sendMessage({action: 'generateTags', article: article.value})
+}
+
+const generateTitle = () => {
+  if (gptOutput.value === "") {
+    ElMessage({
+      showClose: true,
+      message: 'Generate title must be after gpt output was generated.',
+      type: 'error'
+    })
+  } else {
+    chrome.runtime.sendMessage({action: 'generateTitle', article: gptOutput.value})
+  }
+
 }
 
 const settings = () => {
@@ -174,15 +191,19 @@ const handleInputConfirm = () => {
   inputValue.value = ''
 }
 watch(article, (newValue, oldValue) => {
-  if (editor) {
-    editor.setMarkdown(newValue)
-  }
+  // if (editor) {
+  //   editor.setMarkdown(newValue)
+  // }
   //generateTags()
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', reloadTemplate);
 });
+
+const updateGptOutput = (event)=>{
+  gptOutput.value = event.target.innerText
+}
 
 const saveGptOutput = async () => {
   let otherSettings = await storage.readOtherSettings()
@@ -192,7 +213,7 @@ const saveGptOutput = async () => {
       url: document.URL,
       gpt_output: gptOutput.value,
       tags: dynamicTags.value,
-      title: document.title
+      title: gptTitle.value
     })
   } else {
     ElMessage({
@@ -235,6 +256,15 @@ const saveGptOutput = async () => {
           <el-button @click="settings">Settings</el-button>
         </el-form-item>
       </el-form>
+      <el-form :inline="true">
+        <el-form-item label="Title" style="max-width: 400px">
+          <el-input v-model="gptTitle" type="text" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="generateTitle">Generate Title</el-button>
+        </el-form-item>
+
+      </el-form>
       <div class="flex gap-2">
         KeyWords:
         <el-tag
@@ -262,11 +292,11 @@ const saveGptOutput = async () => {
       </div>
       <el-tabs type="border-card" style="margin-top: 20px">
         <el-tab-pane label="GPT Output">
-          <pre>{{ gptOutput }}</pre>
+          <pre @input="updateGptOutput" contenteditable="true">{{ gptOutput }}</pre>
         </el-tab-pane>
-        <el-tab-pane label="Origin Content">
-          <div ref="toastuiEditor"></div>
-        </el-tab-pane>
+        <!--        <el-tab-pane label="Origin Content">-->
+        <!--          <div ref="toastuiEditor"></div>-->
+        <!--        </el-tab-pane>-->
       </el-tabs>
     </el-scrollbar>
 

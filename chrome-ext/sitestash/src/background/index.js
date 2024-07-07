@@ -115,6 +115,40 @@ const generateTags = async (request, sender) => {
   })
 }
 
+const generateTitle = async (request, sender) => {
+  let article = request.article
+  let gptSettings = await checkGPTSettings()
+  if (!gptSettings) {
+    return
+  }
+  const ollama = new Ollama({host: gptSettings.ollamaApi})
+  const promptContent = `给下面文章起一个合适的标题,直接输出标题，不要给选项。
+{article}`
+  let response;
+  try {
+    response = await ollama.generate({
+      model: gptSettings.ollamaModelName,
+      prompt: promptContent.replace("{article}", article),
+      stream: false,
+      options: {
+        num_ctx: parseInt(gptSettings.numCtx)
+      }
+    })
+  } catch (e) {
+    chrome.tabs.sendMessage(sender.tab.id, {
+      action: "message",
+      message: "Got an error when generating title: " + e.message
+    });
+    return
+  }
+  chrome.tabs.sendMessage(sender.tab.id, {
+    action: "generateTitleResponse",
+    message: response.response
+  })
+}
+
+
+
 const saveGptOutput = async (request, sender) => {
   const otherSettings = await storage.readOtherSettings()
   const url = otherSettings.receiveApi
@@ -158,6 +192,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     await generateTags(request, sender)
   } else if (request.action === "saveGptOutput") {
     await saveGptOutput(request, sender)
+  } else if (request.action === "generateTitle") {
+    await generateTitle(request, sender)
   }
 });
 
