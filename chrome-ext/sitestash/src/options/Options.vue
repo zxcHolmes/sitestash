@@ -5,7 +5,7 @@ import * as storage from "../storage.js"
 
 const promptTemplates = ref([])
 const gptSettingModel = reactive({
-  "ollamaApi": "http://localhost:11434/api/generate",
+  "ollamaApi": "http://localhost:11434",
   "ollamaModelName": "",
   "numCtx": 2048
 })
