@@ -1,9 +1,7 @@
 <script setup lang="js">
 import TurndownService from "turndown"
 import {ref, onMounted, reactive, nextTick, watch, watchEffect, onBeforeUnmount} from 'vue'
-import Editor from '@toast-ui/editor';
 import * as storage from "../storage.js"
-import '@toast-ui/editor/dist/toastui-editor.css';
 import {ElMessage} from 'element-plus'
 import "element-plus/theme-chalk/el-message.css"
 
