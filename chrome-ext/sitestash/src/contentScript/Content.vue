@@ -203,6 +203,10 @@ const updateGptOutput = (event)=>{
   gptOutput.value = event.target.innerText
 }
 
+const updateArticle = (event) =>{
+  article.value = event.target.innerText
+}
+
 const saveGptOutput = async () => {
   let otherSettings = await storage.readOtherSettings()
   if (otherSettings.receiveApi) {
@@ -292,9 +296,9 @@ const saveGptOutput = async () => {
         <el-tab-pane label="GPT Output">
           <pre @input="updateGptOutput" contenteditable="true">{{ gptOutput }}</pre>
         </el-tab-pane>
-        <!--        <el-tab-pane label="Origin Content">-->
-        <!--          <div ref="toastuiEditor"></div>-->
-        <!--        </el-tab-pane>-->
+        <el-tab-pane label="Origin Content">
+          <pre @input="updateArticle" contenteditable="true">{{ article }}</pre>
+        </el-tab-pane>
       </el-tabs>
     </el-scrollbar>
 
