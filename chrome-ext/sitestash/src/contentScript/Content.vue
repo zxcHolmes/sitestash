@@ -318,4 +318,9 @@ const saveGptOutput = async () => {
 .el-select {
   --el-select-width: 220px;
 }
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-width: 90vw;
+}
 </style>
